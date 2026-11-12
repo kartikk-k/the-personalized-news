@@ -1,5 +1,6 @@
 import { ViewTransition } from "react";
 import Link from "next/link";
+import { BrandMark } from "./BrandMark";
 
 /**
  * The nameplate keeps one view-transition identity across the loading screen, the edition and
@@ -8,12 +9,12 @@ import Link from "next/link";
  */
 export function Masthead({ className = "" }: { className?: string }) {
   return <ViewTransition name="masthead" share="masthead-morph" default="none">
-    <Link className={`masthead ${className}`} href="/" aria-label="The Modern Times — today’s edition">The Modern Times</Link>
+    <Link className={`masthead ${className}`} href="/" aria-label="The Personalized Time — today’s edition"><BrandMark /></Link>
   </ViewTransition>;
 }
 
 export function MastheadLoading() {
   return <ViewTransition name="masthead" share="masthead-morph" default="none">
-    <span className="masthead">The Modern Times</span>
+    <span className="masthead">The Personalized Time</span>
   </ViewTransition>;
 }

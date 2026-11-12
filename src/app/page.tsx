@@ -16,10 +16,12 @@ async function Edition() {
 }
 
 function OpeningEdition() {
-  return <div className="opening-edition" role="status" aria-label="Setting today’s paper">
+  return <div className="opening-edition" role="status" aria-label="Setting today’s newspaper">
     <MastheadLoading />
-    <span className="opening-rule" aria-hidden="true" />
-    <p>Setting today’s paper</p>
+    <div className="opening-status">
+      <span className="opening-rule" aria-hidden="true" />
+      <p>Setting today’s newspaper</p>
+    </div>
   </div>;
 }
 

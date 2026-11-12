@@ -1,13 +1,15 @@
 import Link from "next/link";
+import type { OutlineEntry } from "@/lib/news/outline";
+import { MobileContents } from "./MobileContents";
 import { categoryLabels, type Article } from "@/lib/news/types";
 import { Masthead } from "@/components/ui/Masthead";
 import { MiniMasthead } from "@/components/ui/MiniMasthead";
-import { ArrowLeft } from "@/components/ui/icons";
+import { ArrowLeft, ArrowRight } from "@/components/ui/icons";
 import { ChatGPTLogo, ClaudeLogo, PerplexityLogo } from "@/components/ui/brandLogos";
 
 export function ReaderHeader() {
   return <header className="reader-header">
-    <Link href="/" className="reader-back"><ArrowLeft size={14} /><span>Today’s paper</span></Link>
+    <Link href="/" className="reader-back" aria-label="Back to today’s paper"><ArrowLeft size={20} /><span>Today’s paper</span></Link>
     <Masthead />
     <span aria-hidden="true" />
   </header>;
@@ -28,9 +30,10 @@ export function askLinks(article: Article) {
 }
 
 /** Sticky strip under the masthead: where the story lives, and where to take it next. */
-export function ReaderToolbar({ article }: { article: Article }) {
+export function ReaderToolbar({ article, outline }: { article: Article; outline: OutlineEntry[] }) {
   return <div className="reader-toolbar">
     <div className="toolbar-inner">
+      <MobileContents outline={outline} />
       <div className="toolbar-context">
         <span className="toolbar-section">{article.categories.map((category) => categoryLabels[category]).join(" / ")}</span>
         <span className="toolbar-title" aria-hidden="true">{article.title}</span>
@@ -38,9 +41,9 @@ export function ReaderToolbar({ article }: { article: Article }) {
       <MiniMasthead watch=".reader-header .masthead" />
       <nav className="toolbar-actions" aria-label="Continue with this story">
         <span className="toolbar-label">Ask about this</span>
-        {askLinks(article).map(({ name, href, Icon }) => <a key={name} className="ask-link" href={href} target="_blank" rel="noreferrer" aria-label={`Ask ${name} about this story`}><Icon size={15} /><span className="ask-name">{name}</span></a>)}
+        {askLinks(article).map(({ name, href, Icon }) => <a key={name} className="ask-link" href={href} target="_blank" rel="noreferrer" aria-label={`Ask ${name} about this story`} title={`Ask ${name}`}><Icon size={15} /><span className="ask-name">{name}</span></a>)}
         <span className="toolbar-divider" aria-hidden="true" />
-        <a className="source-button" href={article.url} target="_blank" rel="noreferrer">Original story</a>
+        <a className="source-button" href={article.url} target="_blank" rel="noreferrer">Original story<ArrowRight size={18} /></a>
       </nav>
     </div>
     <span className="reader-progress" aria-hidden="true" />

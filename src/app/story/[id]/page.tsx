@@ -21,7 +21,7 @@ async function Story({ params }: { params: Promise<{ id: string }> }) {
   const published = new Date(article.publishedAt).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 
   return <div className="page-fade">
-    <ReaderToolbar article={article} />
+    <ReaderToolbar article={article} outline={outline} />
     <div className="reader-grid">
       <aside className="reader-rail rail-left"><ReaderContents article={article} outline={outline} /></aside>
       <article className="reader-article">
@@ -85,7 +85,7 @@ export default function StoryPage({ params }: { params: Promise<{ id: string }> 
           <ViewTransition enter="page-enter" default="none"><Story params={params} /></ViewTransition>
         </Suspense>
       </main>
-      <footer className="reader-footer"><span className="masthead">The Modern Times</span></footer>
+      <footer className="reader-footer"><span className="masthead">The Personalized Time</span></footer>
     </div>
   </ViewTransition>;
 }

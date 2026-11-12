@@ -12,11 +12,10 @@ export function Header({ date, section, onSection, onSources, onRandom, searchOp
   return <>
     <header className="site-header">
       <div className="utility-row">
-        <div><button className="icon-button" aria-label={searchOpen ? "Close search" : "Search stories"} aria-expanded={searchOpen} onClick={() => onSearchOpen(!searchOpen)}>{searchOpen ? <Xmark size={16} /> : <Magnifier size={16} />}</button></div>
-        <div className="utility-right"><button onClick={() => onSection("saved")} className="reading-list-button"><Bookmark size={13} />Saved{savedCount > 0 && <span className="saved-count">{savedCount}</span>}</button></div>
+        <div><button className="icon-button" aria-label={searchOpen ? "Close search" : "Search stories"} aria-expanded={searchOpen} onClick={() => onSearchOpen(!searchOpen)}>{searchOpen ? <Xmark size={22} /> : <Magnifier size={22} />}</button><div className="edition-date"><strong>{new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "Asia/Kolkata" })}</strong></div></div>
+        <div className="utility-right"><button onClick={() => onSection("saved")} className="reading-list-button"><Bookmark size={18} />Saved{savedCount > 0 && <span className="saved-count">{savedCount}</span>}</button></div>
       </div>
       <div className="masthead-row">
-        <div className="edition-date"><strong>{new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "Asia/Kolkata" })}</strong></div>
         <Masthead />
       </div>
     </header>
