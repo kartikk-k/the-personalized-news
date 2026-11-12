@@ -8,7 +8,9 @@ import { ArticleBody } from "@/components/news/ArticleBody";
 import { ReaderHeader, ReaderToolbar } from "@/components/pages/story/ReaderChrome";
 import { ReaderContents } from "@/components/pages/story/ReaderContents";
 import { RelatedStories } from "@/components/pages/story/RelatedStories";
-import { EditionLayout, BLOCK_SIZE } from "@/components/pages/home/EditionLayout";
+import { MoreStories } from "@/components/pages/story/MoreStories";
+
+export const maxDuration = 300;
 
 async function Story({ params }: { params: Promise<{ id: string }> }) {
   await connection();
@@ -27,7 +29,7 @@ async function Story({ params }: { params: Promise<{ id: string }> }) {
       <article className="reader-article">
         <header className="story-head" id="overview">
           <div className="eyebrow">{section}</div>
-          <h1>{article.title}</h1>
+          <h1 data-article-id={article.id}>{article.title}</h1>
           <p className="story-deck">{article.description}</p>
           <div className="story-byline">
             <span>By <strong>{author}</strong>{desk && <>, {desk}</>}</span>
@@ -51,10 +53,7 @@ async function Story({ params }: { params: Promise<{ id: string }> }) {
       </article>
       <aside className="reader-rail rail-right"><RelatedStories related={related} /></aside>
     </div>
-    {more.length > 0 && <section className="keep-reading" aria-labelledby="keep-reading-title">
-      <div className="keep-reading-heading"><h2 id="keep-reading-title">Keep reading</h2><span>More on these subjects, closest matches first</span></div>
-      {[more.slice(0, BLOCK_SIZE), more.slice(BLOCK_SIZE, BLOCK_SIZE * 2)].filter((block) => block.length).map((block, index) => <EditionLayout key={index} articles={block} first={index === 0} priority={false} />)}
-    </section>}
+    <MoreStories key={article.id} initialArticles={more} excludedIds={[article.id, ...related.map((item) => item.id)]} includeSports={article.topics.includes("sports")} />
   </div>;
 }
 

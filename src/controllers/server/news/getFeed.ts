@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 import { createHash } from "node:crypto";
 import Parser from "rss-parser";
 import { sources, type Source } from "@/lib/news/sources";
@@ -72,7 +73,7 @@ function nodeText(nodes: ArticleNode[]): string {
 
 async function readSource(source: Source, now: number) {
   const response = await fetch(source.url, {
-    next: { revalidate: 300 }, signal: AbortSignal.timeout(40000),
+    next: { revalidate: 300 }, signal: AbortSignal.timeout(15000),
     headers: { "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml", "User-Agent": "Mozilla/5.0 (compatible; TheModernTimes/1.0; personal news reader)" },
   });
   if (!response.ok) throw new Error("Publisher unavailable");
@@ -139,6 +140,7 @@ const FIRST_PAINT_MS = 9000;
 const status = new Map<string, "ok" | "unavailable">();
 /** Full stories read from publisher pages for feeds that only carry a teaser. */
 const extracted = new Map<string, FullText>();
+const extractedAt = new Map<string, number>();
 /** Teaser stories whose page had no readable story (audio-only, video, blocked): left out of the paper. */
 const unreadable = new Set<string>();
 /** Should the reader read this story from the publisher's page rather than the feed? */
@@ -150,6 +152,7 @@ let refreshing: Promise<void> | null = null;
 function assemble(now: number): Feed {
   const unique = new Map<string, Article>();
   for (const source of sources) for (const article of previous.get(source.id) ?? []) {
+    if (now - new Date(article.publishedAt).getTime() > MAX_AGE_MS) continue;
     const existing = unique.get(article.id);
     if (existing) {
       existing.categories = [...new Set([...existing.categories, ...article.categories])];
@@ -178,7 +181,10 @@ async function resolve(article: Article) {
   const full = await fetchFullText(article.url);
   const fromFeed = feedWords.get(article.id) ?? 0;
   // Use the page when it carries at least the feed's text (pages trim less than feeds do).
-  if (full && full.words >= fromFeed * 0.9) extracted.set(article.id, full);
+  if (full && full.words >= fromFeed * 0.9) {
+    extracted.set(article.id, full);
+    extractedAt.set(article.id, Date.now());
+  }
   else if (!full && !article.fullText && fromFeed < 120) unreadable.add(article.id);
 }
 
@@ -205,8 +211,16 @@ function refresh(): Promise<void> {
       }
     }
     await Promise.all(Array.from({ length: 8 }, worker));
+    const activeIds = new Set([...previous.values()].flat().map((article) => article.id));
+    for (const id of articleBodies.keys()) if (!activeIds.has(id)) { articleBodies.delete(id); feedWords.delete(id); }
+    for (const id of extracted.keys()) {
+      if (!activeIds.has(id) || Date.now() - (extractedAt.get(id) ?? 0) >= 86_400_000) {
+        extracted.delete(id); extractedAt.delete(id);
+      }
+    }
+    unreadable.clear();
     cached = { feed: assemble(Date.now()), at: Date.now() };
-    void warmFullText(cached.feed.articles);
+    await warmFullText(cached.feed.articles.slice(0, 5));
   })().finally(() => { refreshing = null; });
   return refreshing;
 }
@@ -219,6 +233,8 @@ function refresh(): Promise<void> {
 export async function getFeed(): Promise<Feed> {
   if (cached && Date.now() - cached.at < FRESH_MS) return cached.feed;
   const pending = refresh();
+  // Keep pending work alive after streaming the response on serverless hosts.
+  after(() => pending);
   if (cached) return cached.feed;
   await Promise.race([pending, new Promise((resolve) => setTimeout(resolve, FIRST_PAINT_MS))]);
   // `cached` may have been filled by the refresh while we waited.
@@ -227,8 +243,14 @@ export async function getFeed(): Promise<Feed> {
 }
 
 export async function getArticle(id: string) {
-  const feed = await getFeed();
-  const found = feed.articles.find((item) => item.id === id);
+  let feed = await getFeed();
+  let found = feed.articles.find((item) => item.id === id);
+  // A separate cold function may not have received this publisher within the first-paint window.
+  if (!found && refreshing) {
+    await refreshing;
+    feed = cached?.feed ?? assemble(Date.now());
+    found = feed.articles.find((item) => item.id === id);
+  }
   if (!found) return null;
   let article = found;
   let source = articleBodies.get(id) ?? [];
@@ -244,6 +266,6 @@ export async function getArticle(id: string) {
   // Sports only appears alongside sports.
   const pool = article.topics.includes("sports") ? feed.articles : feed.articles.filter((item) => !item.topics.includes("sports"));
   const ranked = rankRelated(article, pool, (articleId) => nodeText(extracted.get(articleId)?.body ?? articleBodies.get(articleId) ?? []));
-  // The closest five sit beside the story; the next thirty fill two edition blocks below it.
-  return { article, body, outline, related: ranked.slice(0, 5), more: ranked.slice(5, 35) };
+  // The closest five sit beside the story; the rest paginate below it.
+  return { article, body, outline, related: ranked.slice(0, 5), more: ranked.slice(5) };
 }

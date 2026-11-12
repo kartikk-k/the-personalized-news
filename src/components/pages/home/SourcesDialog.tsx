@@ -6,7 +6,8 @@ import { categoryLabels, categoryOrder, type Category, type Feed } from "@/lib/n
 const statusLabel = (source: Feed["sources"][number]) =>
   source.status === "ok" ? `${source.count} recent` : source.status === "stale" ? "Showing earlier stories" : "Not responding";
 
-export function SourcesDialog({ open, onClose, sources, hidden, onToggle, priorities, onTogglePriority }: {
+export function SourcesDialog({ open, onClose, sources, hidden, onToggle, priorities, onTogglePriority, busy = false, message = "" }: {
+  busy?: boolean; message?: string;
   open: boolean; onClose: () => void; sources: Feed["sources"]; hidden: string[]; onToggle: (id: string) => void;
   priorities: Category[]; onTogglePriority: (category: Category) => void;
 }) {
@@ -16,13 +17,14 @@ export function SourcesDialog({ open, onClose, sources, hidden, onToggle, priori
     <div className="dialog-content">
       <div className="dialog-top"><h2 id="sources-title">Sources &amp; priorities</h2><button aria-label="Close" className="icon-button" onClick={onClose}><Xmark size={18} /></button></div>
 
+      {message && <p role="status" className="dialog-hint">{message}</p>}
       <section className="dialog-section" aria-labelledby="priorities-title">
         <h3 className="dialog-label" id="priorities-title">Prioritize</h3>
         <p className="dialog-hint">Starred sections rise a little more often in your weekly mix. It’s a gentle lean, not a filter.</p>
         <div className="priority-chips">
           {categoryOrder.map((category) => {
             const on = priorities.includes(category);
-            return <button key={category} aria-pressed={on} onClick={() => onTogglePriority(category)}>{on ? <StarFilled size={12} /> : <Star size={12} />}{categoryLabels[category]}</button>;
+            return <button disabled={busy} key={category} aria-pressed={on} onClick={() => onTogglePriority(category)}>{on ? <StarFilled size={12} /> : <Star size={12} />}{categoryLabels[category]}</button>;
           })}
         </div>
       </section>
@@ -35,7 +37,7 @@ export function SourcesDialog({ open, onClose, sources, hidden, onToggle, priori
           return <div className="source-group" key={category}>
             <div className="source-group-title">{categoryLabels[category]}</div>
             {group.map((source) => <label className="source-row" key={source.id}>
-              <input type="checkbox" checked={!hidden.includes(source.id)} onChange={() => onToggle(source.id)} />
+              <input disabled={busy} type="checkbox" checked={!hidden.includes(source.id)} onChange={() => onToggle(source.id)} />
               <span className="source-name">{source.name}</span>
               <span className={`source-status is-${source.status}`}>{statusLabel(source)}</span>
             </label>)}

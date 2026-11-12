@@ -1,6 +1,8 @@
 import { connection } from "next/server";
 import { getFeed } from "@/controllers/server/news/getFeed";
 
+export const maxDuration = 300;
+
 export async function GET() {
   // Always live: never prerender ~40 publisher feeds at build time.
   await connection();

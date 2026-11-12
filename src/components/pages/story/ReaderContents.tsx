@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Article } from "@/lib/news/types";
 import type { OutlineEntry } from "@/lib/news/outline";
+import { useArticleProgress } from "./useArticleProgress";
 import { StoryActions } from "@/components/news/StoryActions";
 
 type Entry = { id: string; label: string; kind: OutlineEntry["kind"] | "edge" };
@@ -15,7 +16,7 @@ export function ReaderContents({ article, outline }: { article: Article; outline
     { id: "source-notes", label: "Source & credits", kind: "edge" },
   ], [outline]);
   const [active, setActive] = useState("overview");
-  const [progress, setProgress] = useState(0);
+  const progress = useArticleProgress();
 
   useEffect(() => {
     let frame = 0;
@@ -27,10 +28,9 @@ export function ReaderContents({ article, outline }: { article: Article; outline
         const element = document.getElementById(entry.id);
         if (element && element.getBoundingClientRect().top <= marker) current = entry.id;
       }
-      const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8;
+      const articleEnd = document.querySelector(".reader-article")?.getBoundingClientRect().bottom;
+      const atEnd = articleEnd !== undefined && articleEnd <= window.innerHeight;
       setActive(atEnd ? entries[entries.length - 1].id : current);
-      const body = document.getElementById("story-body")?.getBoundingClientRect();
-      if (body && body.height > 0) setProgress(Math.min(1, Math.max(0, (window.innerHeight * 0.6 - body.top) / body.height)));
     }
     function schedule() { if (!frame) frame = requestAnimationFrame(measure); }
     measure();

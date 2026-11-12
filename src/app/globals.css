@@ -728,10 +728,6 @@ button {
   transform-origin: left;
 }
 @supports (animation-timeline: scroll()) {
-  .reader-progress {
-    animation: reader-progress linear both;
-    animation-timeline: scroll(root);
-  }
   .toolbar-context {
     animation: toolbar-reveal linear both;
     animation-timeline: scroll(root);
@@ -741,9 +737,6 @@ button {
 @keyframes toolbar-reveal {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-@keyframes reader-progress {
-  to { transform: scaleX(1); }
 }
 .reader-grid {
   display: grid;
@@ -2168,3 +2161,15 @@ button svg [stroke], .reader-back svg [stroke], .source-button svg [stroke] {
 @media (max-width: 380px) {
   .mobile-contents summary > span { display: none; }
 }
+
+.owner-sign-in { max-width:460px; margin:10vh auto; padding:24px; }
+.owner-sign-in .masthead { font-size:26px; }
+.owner-sign-in h1 { font-size:32px; margin:40px 0 12px; }
+.owner-sign-in p { line-height:1.5; color:var(--muted); }
+.owner-sign-in label { display:block; margin:24px 0 8px; font-weight:700; }
+.owner-sign-in input { width:100%; border:1px solid var(--ink); padding:12px; font:inherit; background:var(--paper); color:var(--ink); }
+.owner-submit { display:block; background:#000; color:#fff; padding:14px 20px; margin-top:24px; text-align:center; font-weight:700; width:100%; }
+.owner-deploy { display:block; margin:24px auto 0; text-decoration:underline; }
+.owner-dialog { border:1px solid var(--rule); padding:28px; max-width:420px; width:calc(100% - 32px); margin:auto; color:var(--ink); background:var(--paper); }
+.owner-dialog::backdrop { background:rgb(0 0 0 / .45); }
+.owner-dialog h2 { font-size:24px; }

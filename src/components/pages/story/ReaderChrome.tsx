@@ -1,3 +1,4 @@
+import { ReadingProgress } from "./ReadingProgress";
 import Link from "next/link";
 import type { OutlineEntry } from "@/lib/news/outline";
 import { MobileContents } from "./MobileContents";
@@ -46,6 +47,6 @@ export function ReaderToolbar({ article, outline }: { article: Article; outline:
         <a className="source-button" href={article.url} target="_blank" rel="noreferrer">Original story<ArrowRight size={18} /></a>
       </nav>
     </div>
-    <span className="reader-progress" aria-hidden="true" />
+    <ReadingProgress />
   </div>;
 }

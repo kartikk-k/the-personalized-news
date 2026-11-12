@@ -1,52 +1,55 @@
-# The Modern Times
+# The Personalized Time
 
-A personal newspaper built with Next.js, React, and TypeScript. Newspaper typography and varied editorial layouts meet a newest-first RSS feed.
+A Next.js RSS newspaper with private cloud-backed saved articles and owner-only synced source preferences.
 
-## Run locally
+- Live site: [news.kartikk.io](https://news.kartikk.io/)
+- Vercel project: [the-personalized-news](https://vercel.com/kartikkks-projects/the-personalized-news)
+- Repository: [kartikk-k/the-personalized-news](https://github.com/kartikk-k/the-personalized-news)
+
+## Run and deploy
 
 ```sh
-npm install
+npm ci
 npm run dev
-```
-
-Open the Local URL printed by Next.js (normally http://localhost:3000).
-
-```sh
+# Production check:
 npm run build
 npm start
 ```
 
-## Feed and sources
+On Vercel, import the repository with the Next.js preset, use `npm ci` and `npm run build`, and leave the output directory at its framework default. Use Node.js 22 or newer supported by Next.js and enable Fluid Compute. Feed and article routes export a 300-second maximum duration to accommodate publisher timeouts and post-response refresh work. No database or writable filesystem is required. Private JSON storage uses Vercel Blob.
 
-Around forty trusted publisher feeds, configured in `src/lib/news/sources.ts` (callers can never supply URLs). Sections: Technology, Startups & Acquisitions, SF, Cybersecurity, Software Engineering, Biotech, Science, U.S., World and Business. Sub-topic chips (e.g. U.S. › Politics / Immigration, Science › Physics / Math / Space / Biology, Startups › Funding / Acquisitions) come from conservative headline/summary rules in `src/lib/news/topics.ts`; tech stories about raises or deals also file under Startups, and Bay Area tech stories under SF. Sports only appears under U.S. › Sports.
+The existing project is linked to the private `personalized-news-saved-articles` Blob store in `iad1`. Vercel supplies `BLOB_READ_WRITE_TOKEN` in Production, Preview and Development. Pull local credentials with `vercel env pull .env.local`; `.env.local` and `.vercel/` are ignored by Git. Never expose the Blob token with a `NEXT_PUBLIC_` prefix.
 
-Most feeds carry the full article. For teaser-only feeds (NPR, BBC, The Record, The Hacker News, TechCrunch, STAT…) the server reads the story from the publisher's page Reader-mode style (`@mozilla/readability`), warming them in the background. Publishers behind a bot wall (Ars Technica, or any page answering 403/405 or a Cloudflare challenge) are read through Jina's public Reader (`r.jina.ai`); set `JINA_API_KEY` for higher rate limits. Stories whose page has no readable text (audio or video segments) are left out of the paper. Sifted was removed because its stories are paywalled.
+After checks, deploy with `vercel --prod --scope kartikkks-projects`. The production project serves `news.kartikk.io`.
 
-The feed is cached in memory (stale-while-revalidate, five minutes). A cold server answers with whatever sources respond within a few seconds and fills in the rest on the next request.
+`JINA_API_KEY` is optional: add it as a server-only Vercel environment variable for higher Jina Reader limits. Never prefix it with `NEXT_PUBLIC_`. Without it, public Reader limits apply. Publisher availability, bot protection, regional restrictions and Jina quotas can differ between your laptop and Vercel; a successful build does not verify those remote conditions. Verify homepage, feed API, article links, images, sign-in and bookmarks after deployment.
 
-## Ordering
+## Where data lives
 
-- First visit of the day (a cookie that expires at local midnight): newest first.
-- Later visits: the past week is reshuffled each time, leaning gently (≈1.5×) toward prioritized sections and fresher stories; anything older follows, newest first. Startups also leans toward U.S. companies.
-- Priorities default to Technology, Cybersecurity, Biotech and Science and are changed in **Sources & priorities**. A Mix/Latest switch overrides the order for the session.
+- Saved articles: one owner-only private JSON file in Vercel Blob, containing metadata and source links, not full article bodies. Sign in at `/sign-in` to share the list across your devices. There is no signup endpoint.
+- Credentials stay server-side: `OWNER_EMAIL`, `OWNER_PASSWORD_HASH` (salted scrypt hash, never the plaintext password), and `OWNER_SESSION_SECRET`. Set these in Vercel Environment Variables; mark Production/Preview values sensitive. Never use a `NEXT_PUBLIC_` prefix. To configure your own instance, generate a random salt and encode the hash as `salt:hexScryptHash`, using Node's `scryptSync(password, salt, 64)`; use a random 32-byte hex session secret. The repository contains no owner's email, password or secret values.
+- Login uses a signed, expiring HttpOnly, Secure-in-production, SameSite=Strict cookie. Login and mutations require same-origin requests. Credentials and internal errors are never included in responses. Changing the password hash or session secret invalidates existing sessions. Vercel project administrators with environment access remain trusted; this does not hide secrets from the hosting provider or authorized project administrators.
+- localStorage key `modern-times-reading-list` is a local cache/offline fallback. Guests can save on their own device but cannot read or write the owner's cloud list. Local bookmarks are imported once after owner sign-in; pending edits retry on reconnection, focus or Retry sync. Sign-out clears the local private list and pending edits on that browser. The Saved page reports sync status.
+- Private reading history records article IDs and view timestamps only for the signed-in owner. At least half a card or story title must remain in the visible viewport for 1.5 seconds. Batches sync every five seconds and on page hide; an interrupted/offline session can lose an unsubmitted batch. History is bounded to 10,000 entries and pruned to 90 days on writes. On reload or manual refresh, unseen stories rank above viewed ones while retaining the edition's order within each group; cards do not jump while scrolling. Guests are not tracked.
+- Production uses separate Blob prefixes from development/preview. Server reads bypass the Blob cache and request uncompressed responses to preserve strong ETags. Conditional writes with bounded retries prevent concurrent saves from silently overwriting each other. Web Locks serialize same-browser reconciliation. All list and history access is authenticated server-side; the Blob token never reaches browser JavaScript. Limits: 1,000 saved articles and 1 MB per list mutation.
+- Sources and priorities: owner-only private Blob JSON, loaded when opening the newspaper or Sources dialog and saved only after a successful authenticated update. Guests use defaults and are directed to sign in before editing. Legacy browser-local settings are no longer used.
+- Visit marker: `mt-visited` cookie, until local midnight. This non-sensitive cookie selects the initial mix/latest mode; it contains no history or owner preferences.
+- localStorage is scoped to the exact origin: localhost, preview URLs and production/custom domains have separate data. A redeploy on the same domain preserves the local cache and sign-in cookie; clearing site data removes both. Private browsing storage is temporary.
+- Saved metadata and links are not a full-text archive. The internal reader resolves IDs from current publisher feeds; old bookmarks can stop opening internally after the publisher removes the story. The saved card retains its original publisher link.
+- Article/feed caches contain public publisher content, not users' bookmarks. No database is configured. In-memory Maps are temporary, per process, and are lost on cold starts or redeploys; separate Vercel instances do not share them.
 
-Fifteen stories render per edition block; an intersection observer appends the next block as you scroll. Bookmarks and hidden sources persist in localStorage; the visit and priority cookies drive the server-rendered order.
+## Freshness and caching
 
-## Design
+- RSS requests use Next.js's fetch cache with 300-second revalidation. The assembled in-memory feed also has a five-minute freshness window. Revalidation is request-driven, not a scheduled five-minute crawl; stale content can be served while refreshing or when publishers fail.
+- Cold homepage/API requests wait up to nine seconds for an initial partial edition. Remaining work is registered with Next.js `after` so Vercel can keep the invocation alive. Eight feeds are fetched concurrently with 15-second timeouts. A missing article waits for an in-flight refresh before reporting it unavailable.
+- Only the five newest stories are considered for background full-text warming. Other stories are extracted on demand, avoiding an unbounded scrape in a serverless invocation.
+- Publisher article HTML/Jina responses use 24-hour fetch revalidation. In-process extraction promises expire after one hour; extracted bodies are discarded after 24 hours or after leaving the feed. Failed extraction attempts may therefore retry after an hour. These are caches, not durable archives.
+- The browser checks `/api/feed` every two minutes while active, with a one-minute query stale time. New stories wait behind the update banner. Refresh/Load more checks the server cache; it does not forcibly bypass publisher caching.
+- Image optimization has a minimum cache TTL of one day (upstream headers can extend it). Fonts are served locally.
+- RSS history is finite: at most 15 recent articles per source, up to 45 days old. Load more reveals further loaded stories, then checks for newly available stories and reports when none remain. It does not fabricate an infinite archive.
 
-- Chomsky: blackletter masthead, by Fredrick R. Brennan. An open font in the style of the NYT nameplate; not the proprietary NYT font.
-- Libre Caslon Text: editorial headlines and copy.
-- Arial/Helvetica: navigation and metadata.
-- Icons: the local Nucleo UI library only (`src/components/ui/icons.tsx`); third-party marks are the official logos (`src/components/ui/brandLogos.tsx`).
-- Publisher images go through Next's image optimizer for known hosts (`src/lib/news/imageHosts.ts`); add a host there when adding a source with new image domains.
-- Fonts are served locally; licenses are in `public/fonts/`.
-- Responsive desktop, tablet, and phone layouts; semantic articles; focus indicators; reduced-motion support; native accessible source dialog.
+## External services and content
 
-## Structure
+The server requests configured RSS feeds and publisher article pages. Blocked pages may be sent to `r.jina.ai` as public article URLs. AI buttons open the chosen provider with the article title, source URL and a summary prompt; they do not invoke paid AI APIs on this server. Publisher images/video embeds make requests to their respective services.
 
-- `src/app/`: routes, API endpoint, metadata, global editorial styles.
-- `src/components/pages/home/`: newspaper layout, source controls, feed state.
-- `src/components/news/`: article presentation and browser reading list.
-- `src/controllers/server/news/`: publisher ingestion.
-- `src/controllers/client/news/`: validated browser API access.
-- `src/lib/news/`: source configuration and shared Zod contracts.
+The UI currently bundles BBC Reith font files. No license granting this project permission to redistribute these files is present in the repository; confirm permission or replace them with appropriately licensed fonts before public deployment. The older Libre Caslon and Chomsky files have their license files included.

@@ -113,11 +113,8 @@ async function extract(url: string): Promise<FullText | null> {
  */
 export function fetchFullText(url: string): Promise<FullText | null> {
   const entry = cache.get(url);
-  if (entry) {
-    // Successes are kept; failures are retried at most hourly.
-    void entry.pending.then((result) => { if (!result && Date.now() - entry.at > RETRY_MS) cache.delete(url); });
-    return entry.pending;
-  }
+  if (entry && Date.now() - entry.at < RETRY_MS) return entry.pending;
+  if (cache.size >= 500) cache.delete(cache.keys().next().value!);
   const pending = extract(url);
   cache.set(url, { at: Date.now(), pending });
   return pending;
