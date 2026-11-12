@@ -1,3 +1,4 @@
+import { PageLoading } from "@/components/ui/PageLoading";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -9,4 +10,4 @@ async function ReadingList() {
   if (!await isOwner()) redirect("/sign-in");
   return <SavedPage date={new Date().toISOString()} />;
 }
-export default function Page() { return <Suspense fallback={<p role="status">Loading saved articles…</p>}><ReadingList /></Suspense>; }
+export default function Page() { return <Suspense fallback={<PageLoading message="Loading saved articles…" />}><ReadingList /></Suspense>; }

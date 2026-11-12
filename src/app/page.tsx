@@ -8,7 +8,7 @@ import { connection } from "next/server";
 import { cookies } from "next/headers";
 import { getFeed } from "@/controllers/server/news/getFeed";
 import { Newspaper } from "@/components/pages/home";
-import { MastheadLoading } from "@/components/ui/Masthead";
+import { PageLoading } from "@/components/ui/PageLoading";
 import { VISITED_COOKIE } from "@/lib/news/ordering";
 
 export const maxDuration = 300;
@@ -24,20 +24,10 @@ async function Edition() {
   return <Newspaper initialViewed={viewed} owner={owner} initialFeed={feed} initialMode={mode} seed={seed} initialHidden={preferences.hidden} initialPriorities={preferences.priorities} />;
 }
 
-function OpeningEdition() {
-  return <div className="opening-edition" role="status" aria-label="Setting today’s newspaper">
-    <MastheadLoading />
-    <div className="opening-status">
-      <span className="opening-rule" aria-hidden="true" />
-      <p>Setting today’s newspaper</p>
-    </div>
-  </div>;
-}
-
 export default function Home() {
   return <ViewTransition enter="page-enter" exit="page-exit" default="none">
     <div>
-      <Suspense fallback={<ViewTransition exit="page-exit" default="none"><OpeningEdition /></ViewTransition>}>
+      <Suspense fallback={<ViewTransition exit="page-exit" default="none"><PageLoading /></ViewTransition>}>
         <ViewTransition enter="page-enter" default="none"><Edition /></ViewTransition>
       </Suspense>
     </div>

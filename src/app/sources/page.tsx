@@ -1,3 +1,4 @@
+import { PageLoading } from "@/components/ui/PageLoading";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { isOwner } from "@/controllers/server/auth/session";
@@ -13,4 +14,4 @@ async function Settings() {
   const initial = owner ? (await readPreferences()).preferences : defaultPreferences;
   return <SourcesPage date={feed.fetchedAt} sources={feed.sources} owner={owner} initial={initial} />;
 }
-export default function Page() { return <Suspense fallback={<p role="status">Loading sources…</p>}><Settings /></Suspense>; }
+export default function Page() { return <Suspense fallback={<PageLoading message="Loading sources…" />}><Settings /></Suspense>; }
