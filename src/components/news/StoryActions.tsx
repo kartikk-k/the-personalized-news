@@ -18,7 +18,7 @@ export function StoryActions({ article }: { article: Article }) {
     catch { window.prompt("Copy the original story link", article.url); }
   }
   return <div className="story-actions">
-    <button type="button" onClick={() => saved.toggle(article)} aria-pressed={isSaved}>{isSaved ? <BookmarkFilled size={14} /> : <Bookmark size={14} />}<span>{isSaved ? "Saved" : "Save for later"}</span></button>
+    {saved.authenticated && <button type="button" onClick={() => saved.toggle(article)} aria-pressed={isSaved}>{isSaved ? <BookmarkFilled size={14} /> : <Bookmark size={14} />}<span>{isSaved ? "Saved" : "Save for later"}</span></button>}
     <button type="button" onClick={copy}>{copied ? <Check size={14} /> : <LinkIcon size={14} />}<span aria-live="polite">{copied ? "Link copied" : "Copy link"}</span></button>
   </div>;
 }

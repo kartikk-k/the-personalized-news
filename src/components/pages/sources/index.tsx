@@ -1,22 +1,20 @@
 "use client";
-import { useEffect, useRef } from "react";
-import { Star, StarFilled, Xmark } from "@/components/ui/icons";
+import { SiteTopBar } from "@/components/news/SiteTopBar";
+import { usePreferences } from "@/components/news/usePreferences";
+import type { Preferences } from "@/lib/preferences/schema";
+import { Star, StarFilled } from "@/components/ui/icons";
 import { categoryLabels, categoryOrder, type Category, type Feed } from "@/lib/news/types";
 
 const statusLabel = (source: Feed["sources"][number]) =>
   source.status === "ok" ? `${source.count} recent` : source.status === "stale" ? "Showing earlier stories" : "Not responding";
 
-export function SourcesDialog({ open, onClose, sources, hidden, onToggle, priorities, onTogglePriority, busy = false, message = "" }: {
-  busy?: boolean; message?: string;
-  open: boolean; onClose: () => void; sources: Feed["sources"]; hidden: string[]; onToggle: (id: string) => void;
-  priorities: Category[]; onTogglePriority: (category: Category) => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => { if (open) dialog.current?.showModal(); else dialog.current?.close(); }, [open]);
-  return <dialog className="sources-dialog" ref={dialog} aria-labelledby="sources-title" onClose={onClose} onClick={(event) => { if (event.target === dialog.current) onClose(); }}>
-    <div className="dialog-content">
-      <div className="dialog-top"><h2 id="sources-title">Sources &amp; priorities</h2><button aria-label="Close" className="icon-button" onClick={onClose}><Xmark size={18} /></button></div>
-
+export function SourcesPage({ date, owner, sources, initial }: { date: string; owner: boolean; sources: Feed["sources"]; initial: Preferences }) {
+  const { hidden, priorities, busy, message, save } = usePreferences(owner, initial);
+  const onToggle = (id: string) => { void save({ hidden: hidden.includes(id) ? hidden.filter((item) => item !== id) : [...hidden, id] }); };
+  const onTogglePriority = (category: Category) => { void save({ priorities: priorities.includes(category) ? priorities.filter((item) => item !== category) : [...priorities, category] }); };
+  return <div className="newspaper-shell"><SiteTopBar date={date} owner={owner} /><main className="settings-page">
+      <div className="dialog-top"><h1>Sources &amp; priorities</h1></div>
+      <p className="dialog-hint">{owner ? "Your choices sync privately across your devices." : "Your choices are saved in this browser."}</p>
       {message && <p role="status" className="dialog-hint">{message}</p>}
       <section className="dialog-section" aria-labelledby="priorities-title">
         <h3 className="dialog-label" id="priorities-title">Prioritize</h3>
@@ -44,7 +42,5 @@ export function SourcesDialog({ open, onClose, sources, hidden, onToggle, priori
           </div>;
         })}
       </section>
-      <div className="dialog-footer"><button className="dark-button" onClick={onClose}>Done</button></div>
-    </div>
-  </dialog>;
+    </main></div>;
 }

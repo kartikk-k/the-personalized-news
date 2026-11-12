@@ -2173,3 +2173,20 @@ button svg [stroke], .reader-back svg [stroke], .source-button svg [stroke] {
 .owner-dialog { border:1px solid var(--rule); padding:28px; max-width:420px; width:calc(100% - 32px); margin:auto; color:var(--ink); background:var(--paper); }
 .owner-dialog::backdrop { background:rgb(0 0 0 / .45); }
 .owner-dialog h2 { font-size:24px; }
+
+/* A shared grid keeps the logo centered independently of either side's width. */
+.top-bar { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; min-height:88px; gap:16px; }
+.top-bar-left, .top-bar-right { display:flex; align-items:center; gap:12px; min-width:0; }
+.top-bar-right { justify-content:flex-end; }
+.top-bar .top-bar-logo { min-height:0; padding:0; margin:0; display:flex; align-items:center; }
+.top-bar .top-bar-logo::after { display:none; }
+.top-bar-date { font-size:12px; line-height:20px; white-space:nowrap; }
+.top-text-link { display:inline-flex; align-items:center; min-height:44px; text-decoration:underline; text-underline-offset:4px; }
+.top-bar .reading-list-button { display:inline-flex; align-items:center; justify-content:center; min-height:44px; }
+.settings-page { max-width:760px; margin:40px auto 80px; }
+.saved-page-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:32px 0; }
+.saved-page-heading h1 { font-size:24px; font-weight:700; }
+.saved-notice { display:flex; flex-wrap:wrap; align-items:center; gap:16px; padding:16px; background:#f6f6f6; }
+@media(max-width:900px) { .top-bar-date { display:none; } }
+@media(max-width:640px) { .top-bar { min-height:76px; gap:8px; } .top-bar .masthead { font-size:20px; } .top-bar-left .top-text-link { font-size:12px; } .top-bar .reading-list-button { font-size:14px; padding:6px 8px; } }
+.settings-page h1 { font-size:28px; line-height:1.25; font-weight:700; }

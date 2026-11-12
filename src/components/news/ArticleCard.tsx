@@ -43,7 +43,7 @@ function Meta({ article }: { article: Article }) {
     <span className="meta-dot">·</span>
     <time dateTime={article.publishedAt}>{new Date(article.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}</time>
     {article.fullText && <span className="read-time">{article.readMinutes} min read</span>}
-    <button className={`save-button ${isSaved ? "is-saved" : ""}`} aria-label={`${isSaved ? "Remove from saved" : "Save"}: ${article.title}`} aria-pressed={isSaved} onClick={() => saved.toggle(article)}>{isSaved ? <BookmarkFilled size={14} /> : <Bookmark size={14} />}</button>
+    {saved.authenticated && <button className={`save-button ${isSaved ? "is-saved" : ""}`} aria-label={`${isSaved ? "Remove from saved" : "Save"}: ${article.title}`} aria-pressed={isSaved} onClick={() => saved.toggle(article)}>{isSaved ? <BookmarkFilled size={14} /> : <Bookmark size={14} />}</button>}
   </div>;
 }
 

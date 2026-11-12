@@ -11,6 +11,7 @@ const PENDING = "tpt-reading-list-pending";
 const MIGRATED = "tpt-owner-list-migrated";
 const EVENT = "modern-times-reading-list-change";
 type SyncState = "signin" | "local" | "syncing" | "synced" | "error";
+let authenticated = false;
 let state: SyncState = "local";
 let syncing: Promise<void> | null = null;
 let started = false;
@@ -37,6 +38,7 @@ async function synchronize() {
     state = "syncing"; notify();
     try {
       let remote = await readingListRequest();
+      authenticated = remote.authenticated;
       if (!remote.authenticated) { state = "signin"; return; }
       if (!remote.cloud) { state = "local"; return; }
       if (!localStorage.getItem(MIGRATED)) {
@@ -66,6 +68,7 @@ async function synchronize() {
 }
 
 export function useReadingList() {
+  const isAuthenticated = useSyncExternalStore(subscribe, () => authenticated, () => false);
   const raw = useSyncExternalStore(subscribe, snapshot, () => "[]");
   const syncState = useSyncExternalStore(subscribe, () => state, () => "local" as SyncState);
   const articles = useMemo(() => {
@@ -81,6 +84,7 @@ export function useReadingList() {
     window.addEventListener("focus", () => { if (Date.now() - lastSync > 60_000) void synchronize(); });
   }, []);
   async function toggle(article: Article) {
+    if (!authenticated) return;
     const update = () => {
       const current = z.array(articleSchema).parse(JSON.parse(snapshot()));
       const operation: ReadingListMutation = current.some((item) => item.id === article.id)
@@ -95,7 +99,7 @@ export function useReadingList() {
       await synchronize();
     } catch { window.alert("Your browser could not save this story. Please check that local storage is available."); }
   }
-  return { articles, toggle, syncState, retrySync: synchronize, isSaved: (id: string) => articles.some((article) => article.id === id) };
+  return { authenticated: isAuthenticated, articles: isAuthenticated ? articles : [], toggle, syncState, retrySync: synchronize, isSaved: (id: string) => articles.some((article) => article.id === id) };
 }
 
 export async function signOutReadingList() {

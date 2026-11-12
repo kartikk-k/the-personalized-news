@@ -15,10 +15,10 @@ export const maxDuration = 300;
 
 async function Edition() {
   await connection();
-  const [feed, jar] = await Promise.all([getFeed(), cookies()]);
+  const [owner, jar] = await Promise.all([isOwner(), cookies()]);
+  const feed = await getFeed();
   // The first visit of the day reads newest-first; later visits reshuffle the past week.
   const mode = jar.has(VISITED_COOKIE) ? "mix" : "latest";
-  const owner = await isOwner();
   const [viewed, preferences] = owner ? await Promise.all([readHistory().then((data) => Object.keys(data.viewed)).catch(() => []), readPreferences().then((data) => data.preferences).catch(() => defaultPreferences)]) : [[], defaultPreferences];
   const seed = randomInt(2 ** 31);
   return <Newspaper initialViewed={viewed} owner={owner} initialFeed={feed} initialMode={mode} seed={seed} initialHidden={preferences.hidden} initialPriorities={preferences.priorities} />;
